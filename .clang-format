@@ -1,0 +1,4 @@
+# Chromium style for the C++ written here (port/); this file makes it
+# checkable (tools/check.py). The imported files are never formatted. Same
+# base style as the framework and the Linux client.
+BasedOnStyle: Chromium

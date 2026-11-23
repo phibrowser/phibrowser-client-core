@@ -1,0 +1,10 @@
+# Copyright 2026 Phinomenon Inc.
+# Licensed under the Apache License, Version 2.0; see the LICENSE file.
+#
+# The symbols the core's objects need that nothing in this repository
+# defines, one per line, as the linker prints them (libstdc++ names).
+# build/build.py fails when the set changes. It is empty: the five base::
+# functions that upstream defines in the Windows-only client/compat/base.cc
+# (Base64Encode, Base64Decode, NumberToString for int, long and double) are
+# defined in port/base. Do not add a line to make a build pass; a new
+# undefined symbol means the core gained a dependency that needs a decision.
