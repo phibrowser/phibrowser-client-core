@@ -1,28 +1,44 @@
 # Where the files come from
 
 Everything under `core/` and `third_party/`, and the root `LICENSE`,
-is a byte-identical copy of a file in the Phi Browser Windows client,
-https://github.com/phibrowser/phibrowser-win (Apache-2.0). Nothing in those
-directories is written or edited here. `SOURCE.json` is the machine-readable
-record; the tables below are generated from it and `tools/resync.py verify`
-fails when the two disagree.
+came as a byte-identical copy of a file in the Phi Browser Windows client,
+https://github.com/phibrowser/phibrowser-win (Apache-2.0). `SOURCE.json` is
+the machine-readable record; the tables below are generated from it and
+`tools/resync.py verify` fails when the two disagree.
+
+The Windows client now builds these files from this repository (its
+submodule `phi-client-core/`) and has no copy of them. What that means for a
+file depends on its group:
+
+| Group | Files | Rule |
+|---|---|---|
+| `core` | `core/`, `LICENSE` | edited here; this is the only copy |
+| `vendor` | `third_party/` | never edited by hand; each file is recorded with its checksum |
+
+For the group that is edited here the manifest keeps the list of files, the
+path each had in the Windows client and its role. It keeps no checksum and
+no line count: they would be stale after the next edit, and git has the
+history from the import on. The history before the import is in
+phibrowser-win, under the paths of the mapping below.
 
 ## Path mapping
 
-| Upstream (phibrowser-win) | Here |
+| phibrowser-win, up to the commit a group records | Here |
 |---|---|
 | `LICENSE` | `LICENSE` |
 | `client/<path>` | `core/client/<path>` |
 | `third_party/<path>` | `third_party/<path>` |
 
-One group, `core`, which follows upstream: re-sync it whenever upstream
-moves. Upstream's host tests were imported once as a second group and
-removed on 2026-11-23, before this repository was published (`docs/TESTS.md`).
+Both groups come from `2931e0e` (2026-11-20), the last re-sync. The Windows
+client's copies were still byte-identical at `07af403` (2026-11-23), the
+commit its switch to this repository is based on. Upstream's host tests were
+imported once as a further group and removed on 2026-11-23, before this
+repository was published (`docs/TESTS.md`).
 
 ## How the file list was derived
 
-The `core` group is the include closure of the two components, not a
-hand-picked list. Roots: the 22 `.h`, 19 `.cc` and 1 `.inc` of the sync
+The `core` and `vendor` groups started as the include closure of the two
+components, not a hand-picked list. Roots: the 22 `.h`, 19 `.cc` and 1 `.inc` of the sync
 engine and the account local store (the module lists are in `README.md`).
 The closure was taken with `g++ -MM` and `clang++ -MM` (C++20, the include
 roots of `build/build.py`) over every root; both compilers give the same 64
@@ -54,33 +70,42 @@ two components includes them), `client/compat/base.cc` (includes
 `<windows.h>`; the five functions the core needs from it are defined in
 `port/base/`, see `docs/BUILD.md`), and every other file of `client/`.
 
-## Re-sync procedure
+## Changing a file
+
+**`core`** is edited in place.
 
 ```sh
-# 1. What changed upstream since the recorded commit? (dry run)
-python3 tools/resync.py sync --upstream /path/to/phibrowser-win --commit <rev>
+# 1. Edit. A file that is added needs an entry with `local` and `role` in
+#    the group in SOURCE.json (and `upstream` only if it had a path in the
+#    Windows client); a file that is removed loses its entry. Then:
+python3 tools/resync.py render
 
-# 2. Take it. Refuses if a local file no longer matches SOURCE.json.
-python3 tools/resync.py sync --upstream /path/to/phibrowser-win --commit <rev> --apply
-
-# 3. Build and test. A new #include of a file that is not here fails the
-#    compile step; a new link dependency fails the link step.
+# 2. Linux: build and test. A new #include of a file that is not here fails
+#    the compile step; a new link dependency fails the link step.
 python3 build/build.py --framework-include /path/to/phibrowser-win/client/compat --repeat 3
 
-# 4. Check the import against upstream once more, then commit everything
-#    (the changed files, SOURCE.json, SOURCE.md) as one commit named after
-#    the upstream commit.
-python3 tools/resync.py verify --upstream /path/to/phibrowser-win
+# 3. Windows: the same change has to build there. In a phibrowser-win
+#    checkout, with its phi-client-core/ at the change:
+python build-client.py     # from Linux: --clang-dir ... --winsysroot ...
+
+# 4. Commit here. Each client then moves its pin (the gitlink of its
+#    phi-client-core/ submodule) in a commit of its own.
 ```
 
-To add a file (a new upstream header the core started to include): add an
-entry with `upstream`, `local` and `role` to the `core` group in
-`SOURCE.json`, then run step 2. To drop one, delete its entry and the file.
-A file is never edited here; a change it needs is made upstream and arrives
-through a re-sync.
+A file that only one platform needs does not go into `core/`: Linux code
+goes to `port/`, Windows code stays in phibrowser-win.
 
-`python3 tools/resync.py verify` (no checkout needed) is the checksum
-check: it is the first step of `build/build.py`.
+**`vendor`** is not edited. `python3 tools/resync.py verify` (no checkout
+needed) checks every checksum and is the first step of `build/build.py`.
+`tools/resync.py sync --group vendor --upstream /path/to/phibrowser-win`
+can restore the recorded bytes from a checkout that still has commit
+`2931e0e`.
+
+**Not settled: how SQLite and BoringSSL are updated.** They used to be
+updated in the Windows client and carried here by a re-sync. That client
+has no copy now, so `sync` has nothing newer to take. An update needs a
+step that accepts new bytes placed here and records their checksums; it
+does not exist yet.
 
 ## Manifest
 
@@ -88,69 +113,83 @@ check: it is the first step of `build/build.py`.
 
 ### Group `core`
 
-The sync engine and the account local store of the Windows client, their compat headers and sources, and the vendored SQLite and BoringSSL they need. The framework ABI header they include is not imported: the consumer supplies it.
+The sync engine and the account local store, their compat headers and sources, and the licence file. They came from the Windows client and are edited here since that client builds them from this repository: this is their only copy. The framework ABI header they include is not here: the consumer supplies it.
 
 - Origin: https://github.com/phibrowser/phibrowser-win
 - Commit: `2931e0e33bf91afec29b8d84fc0132f415848f80`
 - Commit date: 2026-11-20T12:24:02+08:00
-- Pinned: no
-- Files: 569, lines: 527108
+- Edited here: yes (the commit above is where the files came from)
+- Files: 53
+
+| Local path | Path in the Windows client | Role |
+|---|---|---|
+| `LICENSE` | `LICENSE` | licence of the Windows client (Apache-2.0) |
+| `core/client/compat/base/base64.h` | `client/compat/base/base64.h` | compat header: base64 declarations (phi_tab_store.cc) |
+| `core/client/compat/base/containers/span.h` | `client/compat/base/containers/span.h` | compat header: base::span (via base64.h, values.h) |
+| `core/client/compat/base/json/json_reader.h` | `client/compat/base/json/json_reader.h` | compat header: JSON reader (phi_tab_store.cc) |
+| `core/client/compat/base/json/json_writer.h` | `client/compat/base/json/json_writer.h` | compat header: JSON writer (phi_tab_store.cc) |
+| `core/client/compat/base/memory/raw_ptr_exclusion.h` | `client/compat/base/memory/raw_ptr_exclusion.h` | compat header: empty RAW_PTR_EXCLUSION macro |
+| `core/client/compat/base/strings/string_number_conversions.h` | `client/compat/base/strings/string_number_conversions.h` | compat header: number conversions (compat/json.cc) |
+| `core/client/compat/base/values.h` | `client/compat/base/values.h` | compat header: base::Value (phi_tab_store) |
+| `core/client/compat/json.cc` | `client/compat/json.cc` | compat source: JSON reader and writer (needed to link phi_tab_store.cc) |
+| `core/client/compat/utf8_decode.h` | `client/compat/utf8_decode.h` | compat header: UTF-8 decoder (compat/json.cc) |
+| `core/client/compat/values.cc` | `client/compat/values.cc` | compat source: base::Value (needed to link phi_tab_store.cc) |
+| `core/client/phi_chromium_sync.cc` | `client/phi_chromium_sync.cc` | sync engine: Chromium sync status over the framework ABI |
+| `core/client/phi_chromium_sync.h` | `client/phi_chromium_sync.h` | sync engine: Chromium sync status over the framework ABI |
+| `core/client/phi_guest_migration.cc` | `client/phi_guest_migration.cc` | local store: Guest to account migration |
+| `core/client/phi_guest_migration.h` | `client/phi_guest_migration.h` | local store: Guest to account migration |
+| `core/client/phi_key_crypto.cc` | `client/phi_key_crypto.cc` | sync engine: key-layer primitives over BoringSSL |
+| `core/client/phi_key_crypto.h` | `client/phi_key_crypto.h` | sync engine: key-layer primitives over BoringSSL |
+| `core/client/phi_local_store.cc` | `client/phi_local_store.cc` | local store: the account's SQLite store |
+| `core/client/phi_local_store.h` | `client/phi_local_store.h` | local store: the account's SQLite store |
+| `core/client/phi_sync_bookmarks.cc` | `client/phi_sync_bookmarks.cc` | sync engine: bookmark kind as the engine drives it |
+| `core/client/phi_sync_bookmarks.h` | `client/phi_sync_bookmarks.h` | sync engine: bookmark kind as the engine drives it |
+| `core/client/phi_sync_cleanup.h` | `client/phi_sync_cleanup.h` | sync engine: account cleanup steps |
+| `core/client/phi_sync_clock.h` | `client/phi_sync_clock.h` | sync engine: hybrid logical clock |
+| `core/client/phi_sync_engine.cc` | `client/phi_sync_engine.cc` | sync engine: the round driver (host seams SettingsSidecars, SyncableSetting) |
+| `core/client/phi_sync_engine.h` | `client/phi_sync_engine.h` | sync engine: the round driver (host seams SettingsSidecars, SyncableSetting) |
+| `core/client/phi_sync_invalidation.cc` | `client/phi_sync_invalidation.cc` | sync engine: invalidation stream parser |
+| `core/client/phi_sync_invalidation.h` | `client/phi_sync_invalidation.h` | sync engine: invalidation stream parser |
+| `core/client/phi_sync_keys.cc` | `client/phi_sync_keys.cc` | sync engine: key layer (account, device and profile keys) |
+| `core/client/phi_sync_keys.h` | `client/phi_sync_keys.h` | sync engine: key layer (account, device and profile keys) |
+| `core/client/phi_sync_merge.cc` | `client/phi_sync_merge.cc` | sync engine: per-kind merge and client tags |
+| `core/client/phi_sync_merge.h` | `client/phi_sync_merge.h` | sync engine: per-kind merge and client tags |
+| `core/client/phi_sync_owned.cc` | `client/phi_sync_owned.cc` | sync engine: owned items (cursor table, snapshot, diff, plan) |
+| `core/client/phi_sync_owned.h` | `client/phi_sync_owned.h` | sync engine: owned items (cursor table, snapshot, diff, plan) |
+| `core/client/phi_sync_owned_kinds.cc` | `client/phi_sync_owned_kinds.cc` | sync engine: bookmark and pinned-tab kinds (codec, merge) |
+| `core/client/phi_sync_owned_kinds.h` | `client/phi_sync_owned_kinds.h` | sync engine: bookmark and pinned-tab kinds (codec, merge) |
+| `core/client/phi_sync_pins.cc` | `client/phi_sync_pins.cc` | sync engine: pinned-tab kind as the engine drives it |
+| `core/client/phi_sync_pins.h` | `client/phi_sync_pins.h` | sync engine: pinned-tab kind as the engine drives it |
+| `core/client/phi_sync_proto.cc` | `client/phi_sync_proto.cc` | sync engine: phi.PhiEntity structs and protobuf codec |
+| `core/client/phi_sync_proto.h` | `client/phi_sync_proto.h` | sync engine: phi.PhiEntity structs and protobuf codec |
+| `core/client/phi_sync_protocol.cc` | `client/phi_sync_protocol.cc` | sync engine: wire protocol (host seam SyncTransport) |
+| `core/client/phi_sync_protocol.h` | `client/phi_sync_protocol.h` | sync engine: wire protocol (host seam SyncTransport) |
+| `core/client/phi_sync_rank.cc` | `client/phi_sync_rank.cc` | sync engine: fractional ranks |
+| `core/client/phi_sync_rank.h` | `client/phi_sync_rank.h` | sync engine: fractional ranks |
+| `core/client/phi_sync_rules.cc` | `client/phi_sync_rules.cc` | sync engine: URL rule kind |
+| `core/client/phi_sync_rules.h` | `client/phi_sync_rules.h` | sync engine: URL rule kind |
+| `core/client/phi_sync_spaces.cc` | `client/phi_sync_spaces.cc` | sync engine: Space kind |
+| `core/client/phi_sync_spaces.h` | `client/phi_sync_spaces.h` | sync engine: Space kind |
+| `core/client/phi_sync_status.h` | `client/phi_sync_status.h` | sync engine: status summary for the Sync pane |
+| `core/client/phi_tab_store.cc` | `client/phi_tab_store.cc` | local store: pinned tabs and bookmarks as cells |
+| `core/client/phi_tab_store.h` | `client/phi_tab_store.h` | local store: pinned tabs and bookmarks as cells |
+| `core/client/phi_unicode_lower.inc` | `client/phi_unicode_lower.inc` | local store: generated Unicode lower-case table, included by phi_local_store.cc |
+| `core/client/phi_url_rule_normalize.cc` | `client/phi_url_rule_normalize.cc` | local store: URL rule normalisation |
+| `core/client/phi_url_rule_normalize.h` | `client/phi_url_rule_normalize.h` | local store: URL rule normalisation |
+
+### Group `vendor`
+
+SQLite and BoringSSL as the Windows client vendored them, which the core group's sources need. Copies: never edited by hand, so each file is recorded with its checksum. The Windows client no longer carries them (it builds them from here), so the group is pinned to the commit they were taken from.
+
+- Origin: https://github.com/phibrowser/phibrowser-win
+- Commit: `2931e0e33bf91afec29b8d84fc0132f415848f80`
+- Commit date: 2026-11-20T12:24:02+08:00
+- Edited here: no
+- Pinned: yes
+- Files: 516, lines: 498998
 
 | Local path | Upstream path | Lines | SHA-256 | Role |
 |---|---|---:|---|---|
-| `LICENSE` | `LICENSE` | 188 | `7c1eb6bf2936ea78c389fd1fa17e116364853a1577df105bc4db6fd929b849c3` | licence of the Windows client (Apache-2.0) |
-| `core/client/compat/base/base64.h` | `client/compat/base/base64.h` | 24 | `2f063930d8c5b82025c584cb1d81aff0a45b2456363ff7c775bfed0a7bdf2760` | compat header: base64 declarations (phi_tab_store.cc) |
-| `core/client/compat/base/containers/span.h` | `client/compat/base/containers/span.h` | 99 | `62b245f8c853d478d75ad4efc900461574412673d33fc65f73f37d287eddbe54` | compat header: base::span (via base64.h, values.h) |
-| `core/client/compat/base/json/json_reader.h` | `client/compat/base/json/json_reader.h` | 50 | `01438e2ec873026327df673f2e9a1ec0788fce070e0840b8749e0a4f825c7ded` | compat header: JSON reader (phi_tab_store.cc) |
-| `core/client/compat/base/json/json_writer.h` | `client/compat/base/json/json_writer.h` | 42 | `9ade7bf4ecd5520fbda2a542a0ca3345c57e927adca7dd234ab47fa13b2378b7` | compat header: JSON writer (phi_tab_store.cc) |
-| `core/client/compat/base/memory/raw_ptr_exclusion.h` | `client/compat/base/memory/raw_ptr_exclusion.h` | 12 | `5fbdab1d0ceed36ae368b69ad357c5f679054ac6b4b012e1e038b8c17f69e57b` | compat header: empty RAW_PTR_EXCLUSION macro |
-| `core/client/compat/base/strings/string_number_conversions.h` | `client/compat/base/strings/string_number_conversions.h` | 44 | `fa45b3316bfd7226652446cda5d902667d00e57946251cc4e91e5b1d0281a978` | compat header: number conversions (compat/json.cc) |
-| `core/client/compat/base/values.h` | `client/compat/base/values.h` | 321 | `f5774ff9eca216eb55a52faa91fe4f86706b13d39fdfdec1b05be41f5e14de2d` | compat header: base::Value (phi_tab_store) |
-| `core/client/compat/json.cc` | `client/compat/json.cc` | 692 | `bec49d8a3d1a29ff27c0c1e1835c6fd8528c208057619d724a224095877693f3` | compat source: JSON reader and writer (needed to link phi_tab_store.cc) |
-| `core/client/compat/utf8_decode.h` | `client/compat/utf8_decode.h` | 62 | `d3b1a80b73dfd1212de161ff35d2a6c65ae172849e02c144df84013db23a080f` | compat header: UTF-8 decoder (compat/json.cc) |
-| `core/client/compat/values.cc` | `client/compat/values.cc` | 458 | `8e1d782e6430576adaed13b8ec3eed19399455a33e9e418fcb0864dd0ba1888e` | compat source: base::Value (needed to link phi_tab_store.cc) |
-| `core/client/phi_chromium_sync.cc` | `client/phi_chromium_sync.cc` | 148 | `a0f8d98941c84542a02ed12b0357a0e3f85e3b2fb5dba9e62eb66ba52332bafa` | sync engine: Chromium sync status over the framework ABI |
-| `core/client/phi_chromium_sync.h` | `client/phi_chromium_sync.h` | 93 | `26edfd651226136c96007624ad6660ed4b9a70a85d70fb75129adc70783bbbc8` | sync engine: Chromium sync status over the framework ABI |
-| `core/client/phi_guest_migration.cc` | `client/phi_guest_migration.cc` | 1245 | `d5fd37f6b7b8d47796d80421c6b16aeb8fc8f6a1a1a4fee93ca2b608bcb68c85` | local store: Guest to account migration |
-| `core/client/phi_guest_migration.h` | `client/phi_guest_migration.h` | 162 | `d53e4f73d280ed020ae6b6fe2db0a349b616bc47ca22b3b3a37de23cfb3c48fe` | local store: Guest to account migration |
-| `core/client/phi_key_crypto.cc` | `client/phi_key_crypto.cc` | 444 | `db91309db86cf51a5d59b41648dc5683994d7772b18bc4b4049008839bb558af` | sync engine: key-layer primitives over BoringSSL |
-| `core/client/phi_key_crypto.h` | `client/phi_key_crypto.h` | 118 | `e27b1b663b784864b34f1172ffaba23c116d2ac984d23f5b36630cc90b551f10` | sync engine: key-layer primitives over BoringSSL |
-| `core/client/phi_local_store.cc` | `client/phi_local_store.cc` | 3398 | `f6ff850ebad16ad90c037f512b8bb41f5e28964c1a3acb9b5f7ac7e708937d53` | local store: the account's SQLite store |
-| `core/client/phi_local_store.h` | `client/phi_local_store.h` | 672 | `3eeb15a28b86286fd87faa50faf21156d3b1df796c67dc960ffae9d0313cf586` | local store: the account's SQLite store |
-| `core/client/phi_sync_bookmarks.cc` | `client/phi_sync_bookmarks.cc` | 1205 | `9f00334db598c39deb4ab445efff94e41dddd5934bc9f17a8aa51af8a267f7ad` | sync engine: bookmark kind as the engine drives it |
-| `core/client/phi_sync_bookmarks.h` | `client/phi_sync_bookmarks.h` | 170 | `5625fe568ec70577fd762dab4111fb13701457fb429e861b58213d0c20416d28` | sync engine: bookmark kind as the engine drives it |
-| `core/client/phi_sync_cleanup.h` | `client/phi_sync_cleanup.h` | 39 | `5ddc5179253761f89b441c28a12d178417bd3e2d21770de4bd76dab15823d7c1` | sync engine: account cleanup steps |
-| `core/client/phi_sync_clock.h` | `client/phi_sync_clock.h` | 96 | `a75f59f77ca36d5f14d74e29b4fff8fffce851182f49bc465564261103c1a62c` | sync engine: hybrid logical clock |
-| `core/client/phi_sync_engine.cc` | `client/phi_sync_engine.cc` | 3569 | `6d6ce2c2b8f4a133fcea164b0a4377f3bf32948071815f63ed6794c5c440b4c3` | sync engine: the round driver (host seams SettingsSidecars, SyncableSetting) |
-| `core/client/phi_sync_engine.h` | `client/phi_sync_engine.h` | 680 | `8936c22780e273ca1b860a4ef671041639b39ac24ce1b4a0247ebd88c9ea04d0` | sync engine: the round driver (host seams SettingsSidecars, SyncableSetting) |
-| `core/client/phi_sync_invalidation.cc` | `client/phi_sync_invalidation.cc` | 386 | `ebcc8cfb3dac71820f537655da765dc97a336025828ae0cefb3ac171c52e064d` | sync engine: invalidation stream parser |
-| `core/client/phi_sync_invalidation.h` | `client/phi_sync_invalidation.h` | 59 | `6329b469d11e75a905fecaaa9f3e4a6ce9af27dc4b1bfad1c74c297268920231` | sync engine: invalidation stream parser |
-| `core/client/phi_sync_keys.cc` | `client/phi_sync_keys.cc` | 1418 | `6a62306d4ab81ef3a2a82062d7fa97708a7627760734c62108aa252eae11754c` | sync engine: key layer (account, device and profile keys) |
-| `core/client/phi_sync_keys.h` | `client/phi_sync_keys.h` | 664 | `0318bdb6b1dd8b86fcd03e5db2b01b8047116822865613327b779a294e511511` | sync engine: key layer (account, device and profile keys) |
-| `core/client/phi_sync_merge.cc` | `client/phi_sync_merge.cc` | 350 | `8da4d7bab5ac5e2cc141b94772844876a5bb3b8a21aa61341ab47532845fc274` | sync engine: per-kind merge and client tags |
-| `core/client/phi_sync_merge.h` | `client/phi_sync_merge.h` | 91 | `3167467a4ca78bc0067e4789ed1e39d85d9c76d14fed1137796ccb969e5f3300` | sync engine: per-kind merge and client tags |
-| `core/client/phi_sync_owned.cc` | `client/phi_sync_owned.cc` | 139 | `a202e8fb866e3be2698e981806ee9e598c403403c10efd364769c68fc5287ea0` | sync engine: owned items (cursor table, snapshot, diff, plan) |
-| `core/client/phi_sync_owned.h` | `client/phi_sync_owned.h` | 1168 | `3e846df3b40225bdb1436bf6fdccc3a6c9097c7a9d75ca42ead52c353a3ab829` | sync engine: owned items (cursor table, snapshot, diff, plan) |
-| `core/client/phi_sync_owned_kinds.cc` | `client/phi_sync_owned_kinds.cc` | 507 | `7dce1e467347584f46baf433d927d74be7e00518511547a23dd4cf7c3100610e` | sync engine: bookmark and pinned-tab kinds (codec, merge) |
-| `core/client/phi_sync_owned_kinds.h` | `client/phi_sync_owned_kinds.h` | 199 | `b56b4e21ed3b92dc349e49079a3dd4b4d97c5689c534e3429a9486d3893c33be` | sync engine: bookmark and pinned-tab kinds (codec, merge) |
-| `core/client/phi_sync_pins.cc` | `client/phi_sync_pins.cc` | 922 | `958daa709c7f0be93adce6120dae7da568db97acfd05b096bd632a4f0b1e349a` | sync engine: pinned-tab kind as the engine drives it |
-| `core/client/phi_sync_pins.h` | `client/phi_sync_pins.h` | 161 | `ba3f0a809ba3e490fac886fcc831719c065b40fa2f9eacd56861d94cc44a9d2e` | sync engine: pinned-tab kind as the engine drives it |
-| `core/client/phi_sync_proto.cc` | `client/phi_sync_proto.cc` | 850 | `0d281b0d05cb5414b8ed986c5ce85900dcc86f9c0079ca5fea69b7ab37680eef` | sync engine: phi.PhiEntity structs and protobuf codec |
-| `core/client/phi_sync_proto.h` | `client/phi_sync_proto.h` | 233 | `c566926bf873119829d0463923a8652431cd946cc42778e6f612fbe9db995ac2` | sync engine: phi.PhiEntity structs and protobuf codec |
-| `core/client/phi_sync_protocol.cc` | `client/phi_sync_protocol.cc` | 493 | `6e05d85da6252e57cdcd6b3f24e8410537acb986e30c2b0bfdbd9b8fbc90231b` | sync engine: wire protocol (host seam SyncTransport) |
-| `core/client/phi_sync_protocol.h` | `client/phi_sync_protocol.h` | 161 | `1b8e82022e6b2645fd67933bed69f92b5191313f068691edb523aa5e06d6679f` | sync engine: wire protocol (host seam SyncTransport) |
-| `core/client/phi_sync_rank.cc` | `client/phi_sync_rank.cc` | 195 | `d9404108fafc13d1594596108e8fc287bc23d7057b65cd6505a57cbaeabebd38` | sync engine: fractional ranks |
-| `core/client/phi_sync_rank.h` | `client/phi_sync_rank.h` | 63 | `d1fc1c68d94c8ebfa0b6d7cceeb6ccc649741d91abc5507c49527a52a894651b` | sync engine: fractional ranks |
-| `core/client/phi_sync_rules.cc` | `client/phi_sync_rules.cc` | 2198 | `88ea45cd72a2280ca5db73b0fc5b0a978e67111d70be5d2af8e864fe25ee31b4` | sync engine: URL rule kind |
-| `core/client/phi_sync_rules.h` | `client/phi_sync_rules.h` | 335 | `103d1685955ead4b3e7cf3cbfa8ae2b079c1bf7c962b01248fd41b3c56aae5b5` | sync engine: URL rule kind |
-| `core/client/phi_sync_spaces.cc` | `client/phi_sync_spaces.cc` | 377 | `716a405489fb95530d4fc53b278558f80117bf08f7bbe65976dfe2c214d1a28e` | sync engine: Space kind |
-| `core/client/phi_sync_spaces.h` | `client/phi_sync_spaces.h` | 218 | `218152e9775d070817a65d2bae296e9ad71a81848d3f67ddba0f4ef94f3092fa` | sync engine: Space kind |
-| `core/client/phi_sync_status.h` | `client/phi_sync_status.h` | 156 | `1e65c454d1f85fcbcdb7d14bbc6ea818fb9d3ef590e17204b4eca9336ee0253a` | sync engine: status summary for the Sync pane |
-| `core/client/phi_tab_store.cc` | `client/phi_tab_store.cc` | 628 | `b3007ae6bcfde7ae059997a5c1ea97e727b803785dfe4e124a371651bba4097c` | local store: pinned tabs and bookmarks as cells |
-| `core/client/phi_tab_store.h` | `client/phi_tab_store.h` | 201 | `64de97845e30dccd748c4921a935c32440677bb06add9de2a001e1617e4afba8` | local store: pinned tabs and bookmarks as cells |
-| `core/client/phi_unicode_lower.inc` | `client/phi_unicode_lower.inc` | 1436 | `0fd480757bceda2c52eed090120459d02563fc23017d1797cd108b231f4680ff` | local store: generated Unicode lower-case table, included by phi_local_store.cc |
-| `core/client/phi_url_rule_normalize.cc` | `client/phi_url_rule_normalize.cc` | 409 | `d7a1042a5e638f463e5d59a5085fc8b38bd504459423d509793e57424980428d` | local store: URL rule normalisation |
-| `core/client/phi_url_rule_normalize.h` | `client/phi_url_rule_normalize.h` | 62 | `9ace4dce1d541d6f08ef8b750a08a6d7ad568203be82f4c3011ee98d7d5a1d49` | local store: URL rule normalisation |
 | `third_party/boringssl/README.phi.md` | `third_party/boringssl/README.phi.md` | 3 | `19413137b912fc3f23fdc14a277c7183dc1a7be0a7b19aef798ed8856dd8769a` | BoringSSL crypto library as vendored upstream (phi_key_crypto.cc) |
 | `third_party/boringssl/sources.txt` | `third_party/boringssl/sources.txt` | 244 | `01adee2d2b10258784e59b498817b1874cdc8a59c343b5321a1001e65d376db6` | BoringSSL crypto library as vendored upstream (phi_key_crypto.cc) |
 | `third_party/boringssl/src/LICENSE` | `third_party/boringssl/src/LICENSE` | 238 | `827c8d8fc207c2392794eef9e00fe246f9f61fdcc132556c275be3dd8c3cd97f` | BoringSSL crypto library as vendored upstream (phi_key_crypto.cc) |

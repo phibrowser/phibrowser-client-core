@@ -1,17 +1,19 @@
 # phi-client-core
 
-The part of the Phi Browser client that the desktop clients can share: the
-sync engine and the account's local store. The code is the Windows client's,
-copied without changes, with a build that proves it compiles, links and its
-tests pass on Linux, and with the few pieces written here that it needs
-on Linux (`port/`).
+The part of the Phi Browser client that the desktop clients share: the
+sync engine and the account's local store. The code came from the Windows
+client and is edited here since both clients build it from this repository.
+With it are a build that proves it compiles, links and its tests pass on
+Linux, and the few pieces written here that it needs on Linux (`port/`).
 
-Status: a local repository, step 1 of the split. Linux is to consume it
-first; the Windows client is to switch to it later. Nothing consumes it yet.
+Status: both clients consume it as the git submodule `phi-client-core/`,
+each pinned to a commit of its own choosing: the Linux client
+(`phibrowser-linux`) and the Windows client (`phibrowser-win`, which no
+longer carries a copy of these files). Development happens on `main`.
 
 ## Where the code comes from
 
-Every file under `core/` and `third_party/`, and `LICENSE`, is a
+Every file under `core/` and `third_party/`, and `LICENSE`, came as a
 byte-identical copy from https://github.com/phibrowser/phibrowser-win
 (Apache-2.0):
 
@@ -21,15 +23,32 @@ Upstream's host tests were imported once and removed on 2026-11-23, before
 this repository was published (`docs/TESTS.md`).
 
 `SOURCE.md` has the exact commits, the path mapping, how the file list was
-derived, and every file with its checksum and role.
+derived, and every file with its role. Their history before that commit is
+in phibrowser-win.
 
-## The move-only rule
+## Who edits what
 
-Files that came from the Windows client are never edited here: no fixes, no
-reformatting, no Linux adaptation. A change they need is made in the Windows
-repository and arrives through a re-sync. `python3 tools/resync.py verify`
-checks this and is the first step of every build. Whatever is written here
-lives in `port/` (code), `build/`, `tools/` and `docs/`.
+Until the Windows client switched to this repository the rule was
+move-only: the files were copies, never edited here, and a change arrived
+through a re-sync. The Windows client has no copy any more, so:
+
+- **`core/` is edited here.** This is its only copy. A change is made in
+  this repository and reaches a client when that client moves its submodule
+  pin.
+- **A change has to keep both clients building.** Here that is
+  `build/build.py` (below). For Windows it is `build-client.py` in a
+  phibrowser-win checkout whose `phi-client-core/` is at the change; this
+  repository cannot run it. The core keeps its `_WIN32` branches (in
+  `phi_local_store.cc`), and code for one platform only still belongs to
+  that platform: `port/` here for Linux, the client's own tree for Windows.
+- **`third_party/` is vendored and never edited by hand.** Each file is
+  recorded with its checksum; `python3 tools/resync.py verify` checks them,
+  and that every file under the two directories is listed, as the first
+  step of every build.
+- **The files from the Windows client keep the style they arrived in.**
+  They are not formatted or linted (`docs/CHECKS.md`). What is written
+  here from scratch lives in `port/` (code), `build/`, `tools/` and `docs/`,
+  and that is formatted and linted.
 
 ## Layout
 
@@ -87,21 +106,30 @@ python3 tools/check.py --fast                            # the pre-commit hook r
 python3 tools/check.py --full --framework-include DIR    # before review
 ```
 
-The fast check verifies the import and, for the files written here only,
-the copyright header, clang-format, ASCII, pyflakes and the script tests.
-The full check adds clang-tidy and the build above in four configurations
-(clang++ and g++, C++20 and C++23). Imported files are never formatted or
-linted. Do not commit with `--no-verify`. Details: `docs/CHECKS.md`.
+The fast check verifies the tree against `SOURCE.json` and, for the files
+written here only, the copyright header, clang-format, ASCII, pyflakes and
+the script tests. The full check adds clang-tidy and the build above in four
+configurations (clang++ and g++, C++20 and C++23). Files that came from the
+Windows client are never formatted or linted. Do not commit with
+`--no-verify`. Details: `docs/CHECKS.md`.
 
-## Re-sync from the Windows client
+## Changing the core
 
 ```sh
-python3 tools/resync.py sync --upstream /path/to/phibrowser-win --commit <rev>           # report
-python3 tools/resync.py sync --upstream /path/to/phibrowser-win --commit <rev> --apply   # refresh
+# 1. Edit under core/. For a file added or removed, add or delete its entry
+#    in SOURCE.json, then:
+python3 tools/resync.py render
+
+# 2. Linux: build and test.
 python3 build/build.py --framework-include DIR --repeat 3
+
+# 3. Windows: in a phibrowser-win checkout with phi-client-core/ at the
+#    change (from Linux, add --clang-dir and --winsysroot).
+python build-client.py
 ```
 
-The full procedure is in `SOURCE.md`.
+Then commit here, and move each client's pin in a commit of that client.
+The procedure with its details is in `SOURCE.md`.
 
 ## What is deliberately not here yet
 
@@ -127,15 +155,19 @@ The full procedure is in `SOURCE.md`.
 - **Tests that run the sync engine proper.** Upstream's `sync_engine_test`
   and `sync_keys_test` no longer compiled against today's interfaces, and
   no upstream host test is kept here (`docs/TESTS.md`).
+- **A way to update SQLite and BoringSSL.** The Windows client used to
+  update them and a re-sync carried the change; that path is gone
+  (`SOURCE.md`).
 - **The rest of the Windows client's platform-neutral code** (window and
   sidebar models, theme, palette, auth codec and others), and zlib.
-- **A remote, CI, and a consumer.** Neither client builds against this
-  repository yet.
+- **CI.** Nothing builds this repository by itself: `build/build.py` is run
+  by hand and by the Linux client's build, and the Windows build of a change
+  is run by hand.
 
 ## Licence
 
 Apache-2.0, see `LICENSE` (the Windows client's licence file, unchanged).
-It covers the imported files and the files written here (`port/`, `build/`,
+It covers the files that came from the Windows client and the files written here (`port/`, `build/`,
 `tools/`, `docs/`, this file, `SOURCE.md`, `SOURCE.json`) alike.
 `third_party/boringssl/src/LICENSE` and
 `third_party/boringssl/src/third_party/fiat/LICENSE` cover BoringSSL;

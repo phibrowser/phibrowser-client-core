@@ -1,10 +1,15 @@
 # Checks for the code written here
 
 `tools/check.py` is the one entry point. It checks the files written in this
-repository and only those: an imported file (everything `SOURCE.json` lists,
-and everything under `core/` and `third_party/`) is never
-formatted, linted or analysed, because it is never edited here. What it does
-check about the imported files is that they are still byte-identical.
+repository and only those: a file that came from the Windows client
+(everything `SOURCE.json` lists, and everything under `core/` and
+`third_party/`) is never formatted, linted or analysed. That rule dates from
+when those files were copies that were never edited here. `core/` is edited
+here now (`README.md`, "Who edits what") and still keeps the style it
+arrived in; whether new code there should meet these checks is not settled.
+What it does check about those files is that each listed one exists, that
+the vendored ones (`third_party/`) are still byte-identical and that nothing
+unlisted sits beside them.
 
 ```sh
 python3 tools/install-hooks.py     # once per clone: the pre-commit hook
@@ -29,7 +34,7 @@ names it and says how to fix them. The exit status is 1 when any failed.
 
 | Check | Mode | Looks at | Fails when |
 |---|---|---|---|
-| source | fast | the imported files | one differs from `SOURCE.json`, or an unlisted file sits in a managed directory (`tools/resync.py verify`) |
+| source | fast | the files `SOURCE.json` lists | one is missing, a vendored one differs from its recorded checksum, or an unlisted file sits in a managed directory (`tools/resync.py verify`) |
 | copyright | fast | `.cc`, `.h`, `.py`, `.sh` written here | the first five lines lack `Copyright 2026 Phinomenon Inc.` or the Apache-2.0 line |
 | format | fast | `.cc`, `.h` written here | clang-format (check only, `.clang-format`: Chromium style) would change anything |
 | ascii | fast | every file written here | a character is not ASCII, or a byte is not UTF-8 |
@@ -103,7 +108,8 @@ copyright check, pyflakes, the "found nothing to check" rule and the
 - Whether the code is right: that is the tests' job, and `BUILD.md` and
   `TESTS.md` say what the tests reach. Only `port/tests/` exists; the sync
   engine proper and most of the core are compiled but run by no test.
-- The imported files' style, by design.
+- The style of the files that came from the Windows client, and the
+  copyright header of a file added under `core/`.
 - Python formatting and typing (no formatter, no type checker).
 - Markdown, JSON and the other text files beyond being ASCII.
 - The content of a copyright header beyond the two lines, and files without

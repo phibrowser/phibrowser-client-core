@@ -20,8 +20,8 @@ that phi_framework directory is made visible to the compiler.
 
 Steps, all of them fatal on failure:
 
-  source   tools/resync.py verify: the imported files still match
-           SOURCE.json byte for byte.
+  source   tools/resync.py verify: every file SOURCE.json lists exists
+           and the vendored ones still match it byte for byte.
   compile  every core .cc, every core header on its own and every .cc of
            port/ (the code written here), with the product settings
            (CORE_FLAGS) and -Wall -Wextra -Werror.
@@ -29,7 +29,7 @@ Steps, all of them fatal on failure:
            compiles them (warnings off: not our code).
   link     links every core and port object with SQLite and BoringSSL and
            compares the undefined symbols with build/link-closure.expected
-           (empty), so a re-sync that adds a dependency is noticed.
+           (empty), so a change that adds a dependency is noticed.
   tests    the tests of port/tests under ASan + UBSan.
 
 Needs python3, git, ar and one of clang++ / g++ (with the matching C
@@ -51,8 +51,8 @@ CLIENT = os.path.join(REPO, "core", "client")
 COMPAT = os.path.join(CLIENT, "compat")
 BORINGSSL = os.path.join(REPO, "third_party", "boringssl")
 SQLITE = os.path.join(REPO, "third_party", "sqlite", "sqlite3.c")
-# Code written in this repository (not imported): what the core needs on
-# Linux and upstream keeps in Windows-only files.
+# Code written in this repository (not taken from the Windows client): what
+# the core needs on Linux and the Windows client keeps in Windows-only files.
 PORT = os.path.join(REPO, "port")
 
 FRAMEWORK_DIR = "chrome/browser/phinomenon/phi_framework"
@@ -66,8 +66,8 @@ C_COMPILER = {"clang++": "clang", "g++": "gcc"}
 # keeps a C++23 dependency from slipping in; --std c++23 checks the other.
 #
 # __fastfail is an MSVC intrinsic that compat/base/containers/span.h:62 and
-# compat/values.cc:424,436 call outside any _WIN32 guard. The files are
-# imported unchanged, so the build supplies the name instead.
+# compat/values.cc:424,436 call outside any _WIN32 guard. The build supplies
+# the name instead; a guard in those two files would let this define go.
 CORE_FLAGS = ["-fno-exceptions", "-fno-rtti", "-DNDEBUG",
               "-D__fastfail(x)=__builtin_trap()"]
 WARNINGS = ["-Wall", "-Wextra", "-Werror"]

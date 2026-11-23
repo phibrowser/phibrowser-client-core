@@ -13,17 +13,19 @@
                            build.py's (default: $PHI_FRAMEWORK_INCLUDE)
   tools/check.py --tidy    clang-tidy alone
 
-The imported files (everything SOURCE.json lists, and its managed
-directories) are never formatted, linted or read by a style check: they are
-not edited here. Every other file git tracks is "written here".
+The files that came from the Windows client (everything SOURCE.json lists,
+and its managed directories) are never formatted, linted or read by a style
+check: the core keeps the style it arrived in, and the vendored libraries are
+not ours. Every other file git tracks is "written here".
 
 It reads the working tree, so stage everything you have changed: a new file
 is seen once it is added.
 
 Fast checks:
 
-  source     the imported files still match SOURCE.json byte for byte
-             (tools/resync.py verify).
+  source     every file SOURCE.json lists exists, the vendored ones still
+             match it byte for byte and its directories hold no unlisted
+             file (tools/resync.py verify).
   copyright  every .cc, .h, .py and .sh written here starts with the
              copyright line and the licence line.
   format     clang-format (check only, .clang-format: Chromium style) on
@@ -131,7 +133,7 @@ def check_copyright(repo, tools):
 
 
 def check_source(repo, tools):
-    """The imported files still match SOURCE.json (tools/resync.py verify)."""
+    """The tree still matches SOURCE.json (tools/resync.py verify)."""
     del tools
     manifest = resync.load_manifest(repo)
     return (sum(len(group["files"]) for group in manifest["groups"]),
@@ -266,9 +268,10 @@ def check_build(cxx, std, build_args):
 # many of those it looked at, its findings as text: empty when clean).
 FILES = "file(s)"
 FAST = [
-    ("source", check_source, "imported " + FILES,
-     "imported files are never edited here: restore them (git checkout), "
-     "or re-sync from upstream (SOURCE.md)"),
+    ("source", check_source, "listed " + FILES,
+     "a vendored file is never edited by hand: restore it (git checkout); "
+     "a new or removed file under a managed directory needs its entry in "
+     "SOURCE.json added or deleted (SOURCE.md)"),
     ("copyright", check_copyright, FILES,
      "start the file with the two lines the other files written here start "
      "with"),

@@ -15,6 +15,8 @@ They can still be found in upstream's history (`b5cb6c4`) and in this
 repository's history up to the commit that removed them.
 
 Consequence: these components have no test in this repository any more.
+`core/` is edited here now (`README.md`, "Who edits what"), so a test for
+any of them is new code written here, beside the tests of `port/`.
 
 - the sync merge core, ranks, clock, client tag hash and URL rule
   normalisation, and the Mac-written sync vectors that checked them;

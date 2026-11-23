@@ -1,21 +1,31 @@
 #!/usr/bin/env python3
 # Copyright 2026 Phinomenon Inc.
 # Licensed under the Apache License, Version 2.0; see the LICENSE file.
-"""Keeps the imported files byte-identical to their upstream commit.
+"""Checks the tree against SOURCE.json, the record of where each file came from.
 
 SOURCE.json lists every file this repository took from phibrowser-win: the
-upstream path, the local path, the SHA-256 of its bytes, its git mode and its
-role. Files are grouped; each group records the upstream commit it came from.
+path it had there, the local path and its role. Files are grouped; each group
+records the upstream commit it came from. Two kinds of group:
+
+  owned     ("owned": true) the files are edited in this repository, which
+            is their only home since the Windows client builds them from
+            here. Only the list is kept: a listed file must exist. A file
+            created here has no "upstream" path.
+  recorded  the files are copies that nobody edits by hand (the vendored
+            libraries). Each entry also has the SHA-256 of its bytes and its
+            git mode, and the file must match them.
 
   resync.py verify [--upstream DIR]
-      Checks that every listed file exists with the recorded checksum and
-      mode, that the managed directories hold no unlisted file and that
-      SOURCE.md matches SOURCE.json. With --upstream it also checks each
-      recorded checksum against the blob at the recorded commit in that
-      phibrowser-win checkout. Exits 1 on any problem.
+      Checks that every listed file exists, that every file of a recorded
+      group has the recorded checksum and mode, that the managed directories
+      hold no unlisted file and that SOURCE.md matches SOURCE.json. With
+      --upstream it also checks each recorded checksum against the blob at
+      the recorded commit in that phibrowser-win checkout. Exits 1 on any
+      problem.
 
   resync.py sync --upstream DIR [--commit REV] [--group NAME] [--apply]
-      Compares the listed files with REV (default HEAD) of the checkout and
+      For recorded groups only; an owned group is refused. Compares the
+      listed files with REV (default HEAD) of the checkout and
       prints one line per file that is changed, deleted or (inside a group's
       whole-directory trees) added upstream. Dry run unless --apply; --apply
       writes the new bytes, removes deleted files, updates SOURCE.json and
@@ -164,12 +174,16 @@ def verify(repo, manifest, upstream=None):
     problems = []
     listed = set()
     for group in manifest["groups"]:
-        tree = upstream_tree(upstream, group["commit"]) if upstream else None
+        owned = group.get("owned")
+        tree = upstream_tree(upstream, group["commit"]) \
+            if upstream and not owned else None
         for entry in group["files"]:
             listed.add(entry["local"])
             data = local_bytes(repo, entry["local"])
             if data is None:
                 problems.append(entry["local"] + ": missing")
+                continue
+            if owned:
                 continue
             if sha256(data) != entry["sha256"]:
                 problems.append(entry["local"] + ": checksum differs")
@@ -205,17 +219,35 @@ def manifest_block(manifest):
             group["description"], "",
             "- Origin: %s" % group["origin"],
             "- Commit: `%s`" % group["commit"],
-            "- Commit date: %s" % group["commit_date"],
-            "- Pinned: %s" % ("yes" if group.get("pinned") else "no"),
-            "- Files: %d, lines: %d" % (
-                len(files), sum(e["lines"] for e in files)),
-            "",
-            "| Local path | Upstream path | Lines | SHA-256 | Role |",
-            "|---|---|---:|---|---|"]
-        for e in files:
-            lines.append("| `%s` | `%s` | %d | `%s` | %s |" % (
-                e["local"], e["upstream"], e["lines"], e["sha256"],
-                e["role"]))
+            "- Commit date: %s" % group["commit_date"]]
+        if group.get("owned"):
+            # Lines and checksums of files that are edited here would be
+            # stale after the next edit; git has them.
+            lines += [
+                "- Edited here: yes (the commit above is where the files "
+                "came from)",
+                "- Files: %d" % len(files),
+                "",
+                "| Local path | Path in the Windows client | Role |",
+                "|---|---|---|"]
+            for e in files:
+                lines.append("| `%s` | %s | %s |" % (
+                    e["local"],
+                    "`%s`" % e["upstream"] if e.get("upstream")
+                    else "none: created here", e["role"]))
+        else:
+            lines += [
+                "- Edited here: no",
+                "- Pinned: %s" % ("yes" if group.get("pinned") else "no"),
+                "- Files: %d, lines: %d" % (
+                    len(files), sum(e["lines"] for e in files)),
+                "",
+                "| Local path | Upstream path | Lines | SHA-256 | Role |",
+                "|---|---|---:|---|---|"]
+            for e in files:
+                lines.append("| `%s` | `%s` | %d | `%s` | %s |" % (
+                    e["local"], e["upstream"], e["lines"], e["sha256"],
+                    e["role"]))
         lines.append("")
     lines.append(END)
     return "\n".join(lines)
@@ -243,7 +275,7 @@ def cmd_verify(args):
     if problems:
         print("%d problem(s)" % len(problems))
         return 1
-    print("ok: every imported file matches " + MANIFEST)
+    print("ok: the tree matches " + MANIFEST)
     return 0
 
 
@@ -251,7 +283,11 @@ def cmd_sync(args):
     manifest = load_manifest(args.repo)
     groups = [g for g in manifest["groups"]
               if (g["name"] == args.group if args.group
-                  else not g.get("pinned"))]
+                  else not g.get("pinned") and not g.get("owned"))]
+    if any(g.get("owned") for g in groups):
+        print("group %s is edited here: there is no upstream copy to sync "
+              "it from" % args.group)
+        return 1
     if not groups:
         print("no group to sync")
         return 1

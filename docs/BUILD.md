@@ -2,8 +2,11 @@
 
 The core has its own rule set, separate from both clients: compile, strict
 warnings, and the tests under ASan + UBSan. Format, ASCII and clang-tidy
-style checks are not run on the imported files (they are not edited here, so
-a finding could not be fixed here). Files written in this repository
+style checks are not run on the files that came from the Windows client
+(`core/`, `third_party/`): they keep the style they arrived in. `core/` is
+edited here all the same (`README.md`, "Who edits what"), and whether new
+code there should meet these checks is not settled.
+Files written in this repository
 (`port/`, `build/`, `tools/`, `docs/`, `README.md`, `SOURCE.md`) are English
 ASCII, and they do get the style checks: `tools/check.py`, described in
 `CHECKS.md`, whose full mode also runs this build in four
@@ -82,7 +85,7 @@ their slots). The two ABI 10 headers differ only in their copyright lines.
 
 | Step | What it does | Fails when |
 |---|---|---|
-| source | `tools/resync.py verify` | an imported file differs from `SOURCE.json`, or an unlisted file sits in `core/` or `third_party/` |
+| source | `tools/resync.py verify` | a file `SOURCE.json` lists is missing, a vendored file (`third_party/`) differs from its recorded checksum, or an unlisted file sits in `core/` or `third_party/` |
 | compile | the 21 core `.cc` files, each of the 22 core headers on its own (20 `.cc` with `--without-framework`) and the `.cc` files of `port/` outside `port/tests/` | any error or warning |
 | vendor | SQLite (plain and sanitized) and BoringSSL's 244 files into `libcrypto.a` | any error |
 | link | links all core and `port/` objects with SQLite and BoringSSL | the undefined symbols differ from `build/link-closure.expected` (which is empty), or the link fails for any other reason |
@@ -94,11 +97,11 @@ Default compiler: `clang++` (Ubuntu clang 18.1.3 here), the compiler the
 Linux client is built with. `g++` (13.3.0 here) is the supported alternative. Both link
 libstdc++.
 
-Default standard: `-std=c++20`. Upstream builds with `/std:c++23preview`,
+Default standard: `-std=c++20`. The Windows client builds with `/std:c++23preview`,
 but the trial compile of 2026-11-21 found that the code uses nothing newer
 than C++20 and does not compile as C++17, and the Linux client is a C++20
 build. Building as C++20 keeps a C++23 dependency from arriving unnoticed in
-a re-sync. `--std c++23` builds the upstream setting.
+a change made for Windows. `--std c++23` builds the Windows setting.
 
 Core objects (`CORE_FLAGS` in `build/build.py`):
 
@@ -125,7 +128,7 @@ SQLite as C with upstream's nine `SQLITE_*` defines; BoringSSL's
 
 ## The `__fastfail` define
 
-`__fastfail` is an MSVC intrinsic. Three imported places call it outside any
+`__fastfail` is an MSVC intrinsic. Three places in the core call it outside any
 `_WIN32` guard: `core/client/compat/base/containers/span.h:62` and
 `core/client/compat/values.cc:424` and `:436`. Without the define three
 translation units fail (`phi_tab_store.cc`, `compat/json.cc`,
@@ -135,9 +138,11 @@ translation units fail (`phi_tab_store.cc`, `compat/json.cc`,
 core/client/compat/base/containers/span.h:62:7: error: use of undeclared identifier '__fastfail'
 ```
 
-The files are not edited here, so the build defines the name as
-`__builtin_trap()`, which keeps the meaning (terminate at once). The fix
-belongs upstream; once it lands and is re-synced, delete the define.
+The build defines the name as `__builtin_trap()`, which keeps the meaning
+(terminate at once). It dates from when these files were copies that could
+not be edited here. The fix is a guard in the two files, which can be made
+here now and has to leave the Windows build as it is; with it, delete the
+define.
 
 ## Warnings: nothing is disabled
 
@@ -175,7 +180,7 @@ imported. `port/base/` defines them, with upstream's results
 (`docs/TESTS.md`). The `long` overload is what `int64_t` resolves to on
 Linux; on Windows the same call reaches the `long long` one.
 
-The check stays: when a re-sync makes the core call something that nothing
+The check stays: when a change makes the core call something that nothing
 here defines, the step prints `new undefined symbol: ...` and fails. Adding
 the name to the expected list is not the fix.
 
