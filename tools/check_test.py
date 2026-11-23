@@ -168,6 +168,14 @@ class SourceTest(RepoTest):
         self.assertEqual(failed, ["source"])
         self.assertIn("core/client/a.cc: checksum differs", out)
 
+    def test_an_edited_file_of_an_owned_group_passes(self):
+        manifest = resync.load_manifest(self.dir)
+        manifest["groups"][0]["owned"] = True
+        resync.save_manifest(self.dir, manifest)
+        self.write("core/client/a.cc", "int edited_here;\n")
+        self.add()
+        self.assertEqual(self.fast()[0], [])
+
     def test_an_unlisted_file_in_a_managed_directory_fails(self):
         self.write("core/client/ours.cc", CC_HEADER)
         failed, out = self.fast()

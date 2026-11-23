@@ -4,485 +4,284 @@
   {
    "commit": "2931e0e33bf91afec29b8d84fc0132f415848f80",
    "commit_date": "2026-11-20T12:24:02+08:00",
-   "description": "The sync engine and the account local store of the Windows client, their compat headers and sources, and the vendored SQLite and BoringSSL they need. The framework ABI header they include is not imported: the consumer supplies it.",
+   "description": "The sync engine and the account local store, their compat headers and sources, and the licence file. They came from the Windows client and are edited here since that client builds them from this repository: this is their only copy. The framework ABI header they include is not here: the consumer supplies it.",
    "files": [
     {
-     "blob": "0bedc3613430abb78f9746272a567c31af37f26d",
-     "lines": 188,
      "local": "LICENSE",
-     "mode": "100644",
      "role": "licence of the Windows client (Apache-2.0)",
-     "sha256": "7c1eb6bf2936ea78c389fd1fa17e116364853a1577df105bc4db6fd929b849c3",
      "upstream": "LICENSE"
     },
     {
-     "blob": "75637f3c08641a1ab51db5c654f0648b85259d6b",
-     "lines": 24,
      "local": "core/client/compat/base/base64.h",
-     "mode": "100644",
      "role": "compat header: base64 declarations (phi_tab_store.cc)",
-     "sha256": "2f063930d8c5b82025c584cb1d81aff0a45b2456363ff7c775bfed0a7bdf2760",
      "upstream": "client/compat/base/base64.h"
     },
     {
-     "blob": "7dfbdf355e80f5f93b0362acafeb1f68a42a52fb",
-     "lines": 99,
      "local": "core/client/compat/base/containers/span.h",
-     "mode": "100644",
      "role": "compat header: base::span (via base64.h, values.h)",
-     "sha256": "62b245f8c853d478d75ad4efc900461574412673d33fc65f73f37d287eddbe54",
      "upstream": "client/compat/base/containers/span.h"
     },
     {
-     "blob": "aadc5447078da214942bc2c01192774a91a94e49",
-     "lines": 50,
      "local": "core/client/compat/base/json/json_reader.h",
-     "mode": "100644",
      "role": "compat header: JSON reader (phi_tab_store.cc)",
-     "sha256": "01438e2ec873026327df673f2e9a1ec0788fce070e0840b8749e0a4f825c7ded",
      "upstream": "client/compat/base/json/json_reader.h"
     },
     {
-     "blob": "9c6b1c93c8c44e6f11f1a1b5d6e261dba73e5378",
-     "lines": 42,
      "local": "core/client/compat/base/json/json_writer.h",
-     "mode": "100644",
      "role": "compat header: JSON writer (phi_tab_store.cc)",
-     "sha256": "9ade7bf4ecd5520fbda2a542a0ca3345c57e927adca7dd234ab47fa13b2378b7",
      "upstream": "client/compat/base/json/json_writer.h"
     },
     {
-     "blob": "b3a3f41dc91200f543bcae8c082f98bc5db40f1c",
-     "lines": 12,
      "local": "core/client/compat/base/memory/raw_ptr_exclusion.h",
-     "mode": "100644",
      "role": "compat header: empty RAW_PTR_EXCLUSION macro",
-     "sha256": "5fbdab1d0ceed36ae368b69ad357c5f679054ac6b4b012e1e038b8c17f69e57b",
      "upstream": "client/compat/base/memory/raw_ptr_exclusion.h"
     },
     {
-     "blob": "1303895c66b16c5ad7a5d29328eba362d66f815e",
-     "lines": 44,
      "local": "core/client/compat/base/strings/string_number_conversions.h",
-     "mode": "100644",
      "role": "compat header: number conversions (compat/json.cc)",
-     "sha256": "fa45b3316bfd7226652446cda5d902667d00e57946251cc4e91e5b1d0281a978",
      "upstream": "client/compat/base/strings/string_number_conversions.h"
     },
     {
-     "blob": "4c9b42bd24088ab8ecf7d1d8e899d9da2d944f53",
-     "lines": 321,
      "local": "core/client/compat/base/values.h",
-     "mode": "100644",
      "role": "compat header: base::Value (phi_tab_store)",
-     "sha256": "f5774ff9eca216eb55a52faa91fe4f86706b13d39fdfdec1b05be41f5e14de2d",
      "upstream": "client/compat/base/values.h"
     },
     {
-     "blob": "84c11b4a01b14260d794ed8e44aab2adea0f4706",
-     "lines": 692,
      "local": "core/client/compat/json.cc",
-     "mode": "100644",
      "role": "compat source: JSON reader and writer (needed to link phi_tab_store.cc)",
-     "sha256": "bec49d8a3d1a29ff27c0c1e1835c6fd8528c208057619d724a224095877693f3",
      "upstream": "client/compat/json.cc"
     },
     {
-     "blob": "c4255dfacc6658401c395a1ae23a7795e18b832c",
-     "lines": 62,
      "local": "core/client/compat/utf8_decode.h",
-     "mode": "100644",
      "role": "compat header: UTF-8 decoder (compat/json.cc)",
-     "sha256": "d3b1a80b73dfd1212de161ff35d2a6c65ae172849e02c144df84013db23a080f",
      "upstream": "client/compat/utf8_decode.h"
     },
     {
-     "blob": "98b0eae3cf281596f787da92eb14893d69873efa",
-     "lines": 458,
      "local": "core/client/compat/values.cc",
-     "mode": "100644",
      "role": "compat source: base::Value (needed to link phi_tab_store.cc)",
-     "sha256": "8e1d782e6430576adaed13b8ec3eed19399455a33e9e418fcb0864dd0ba1888e",
      "upstream": "client/compat/values.cc"
     },
     {
-     "blob": "91170d44cc88cd85608cc5aef5582a307afea36a",
-     "lines": 148,
      "local": "core/client/phi_chromium_sync.cc",
-     "mode": "100644",
      "role": "sync engine: Chromium sync status over the framework ABI",
-     "sha256": "a0f8d98941c84542a02ed12b0357a0e3f85e3b2fb5dba9e62eb66ba52332bafa",
      "upstream": "client/phi_chromium_sync.cc"
     },
     {
-     "blob": "cc49e9d4a82161aa539139ed7294a0d63b338b6d",
-     "lines": 93,
      "local": "core/client/phi_chromium_sync.h",
-     "mode": "100644",
      "role": "sync engine: Chromium sync status over the framework ABI",
-     "sha256": "26edfd651226136c96007624ad6660ed4b9a70a85d70fb75129adc70783bbbc8",
      "upstream": "client/phi_chromium_sync.h"
     },
     {
-     "blob": "d6682fa6245ee8997976f5fab65b53652ecab656",
-     "lines": 1245,
      "local": "core/client/phi_guest_migration.cc",
-     "mode": "100644",
      "role": "local store: Guest to account migration",
-     "sha256": "d5fd37f6b7b8d47796d80421c6b16aeb8fc8f6a1a1a4fee93ca2b608bcb68c85",
      "upstream": "client/phi_guest_migration.cc"
     },
     {
-     "blob": "3015013baf30ea403ec9ba8ed39013d9627a39ed",
-     "lines": 162,
      "local": "core/client/phi_guest_migration.h",
-     "mode": "100644",
      "role": "local store: Guest to account migration",
-     "sha256": "d53e4f73d280ed020ae6b6fe2db0a349b616bc47ca22b3b3a37de23cfb3c48fe",
      "upstream": "client/phi_guest_migration.h"
     },
     {
-     "blob": "1c0489afad8213b5ce9c169cc5ae8c298e266e16",
-     "lines": 444,
      "local": "core/client/phi_key_crypto.cc",
-     "mode": "100644",
      "role": "sync engine: key-layer primitives over BoringSSL",
-     "sha256": "db91309db86cf51a5d59b41648dc5683994d7772b18bc4b4049008839bb558af",
      "upstream": "client/phi_key_crypto.cc"
     },
     {
-     "blob": "dbd8a12e1304204bb718956d0c141dbb7c8b78dd",
-     "lines": 118,
      "local": "core/client/phi_key_crypto.h",
-     "mode": "100644",
      "role": "sync engine: key-layer primitives over BoringSSL",
-     "sha256": "e27b1b663b784864b34f1172ffaba23c116d2ac984d23f5b36630cc90b551f10",
      "upstream": "client/phi_key_crypto.h"
     },
     {
-     "blob": "c8a11c01f230759b8ea10e04b1467827b223f142",
-     "lines": 3398,
      "local": "core/client/phi_local_store.cc",
-     "mode": "100644",
      "role": "local store: the account's SQLite store",
-     "sha256": "f6ff850ebad16ad90c037f512b8bb41f5e28964c1a3acb9b5f7ac7e708937d53",
      "upstream": "client/phi_local_store.cc"
     },
     {
-     "blob": "426059cafc64de1558dcf7990b5acbd5d22de792",
-     "lines": 672,
      "local": "core/client/phi_local_store.h",
-     "mode": "100644",
      "role": "local store: the account's SQLite store",
-     "sha256": "3eeb15a28b86286fd87faa50faf21156d3b1df796c67dc960ffae9d0313cf586",
      "upstream": "client/phi_local_store.h"
     },
     {
-     "blob": "1364ffc4e4bbb4b4c3938f7858745ae9fb8ef98b",
-     "lines": 1205,
      "local": "core/client/phi_sync_bookmarks.cc",
-     "mode": "100644",
      "role": "sync engine: bookmark kind as the engine drives it",
-     "sha256": "9f00334db598c39deb4ab445efff94e41dddd5934bc9f17a8aa51af8a267f7ad",
      "upstream": "client/phi_sync_bookmarks.cc"
     },
     {
-     "blob": "da2c75d65f63a51ea413a821585c87ed1a8bb0bd",
-     "lines": 170,
      "local": "core/client/phi_sync_bookmarks.h",
-     "mode": "100644",
      "role": "sync engine: bookmark kind as the engine drives it",
-     "sha256": "5625fe568ec70577fd762dab4111fb13701457fb429e861b58213d0c20416d28",
      "upstream": "client/phi_sync_bookmarks.h"
     },
     {
-     "blob": "ae78cc7b1a324c3d57ae0d3efab9d514f774fb1c",
-     "lines": 39,
      "local": "core/client/phi_sync_cleanup.h",
-     "mode": "100644",
      "role": "sync engine: account cleanup steps",
-     "sha256": "5ddc5179253761f89b441c28a12d178417bd3e2d21770de4bd76dab15823d7c1",
      "upstream": "client/phi_sync_cleanup.h"
     },
     {
-     "blob": "520dc83813be527f71d9b71b965713c531ad4a52",
-     "lines": 96,
      "local": "core/client/phi_sync_clock.h",
-     "mode": "100644",
      "role": "sync engine: hybrid logical clock",
-     "sha256": "a75f59f77ca36d5f14d74e29b4fff8fffce851182f49bc465564261103c1a62c",
      "upstream": "client/phi_sync_clock.h"
     },
     {
-     "blob": "03a81c1ab898b17fc7dfb79a2d083c2f46b1d876",
-     "lines": 3569,
      "local": "core/client/phi_sync_engine.cc",
-     "mode": "100644",
      "role": "sync engine: the round driver (host seams SettingsSidecars, SyncableSetting)",
-     "sha256": "6d6ce2c2b8f4a133fcea164b0a4377f3bf32948071815f63ed6794c5c440b4c3",
      "upstream": "client/phi_sync_engine.cc"
     },
     {
-     "blob": "8862c583bf31e4e23a395185b62dd642d1a0849e",
-     "lines": 680,
      "local": "core/client/phi_sync_engine.h",
-     "mode": "100644",
      "role": "sync engine: the round driver (host seams SettingsSidecars, SyncableSetting)",
-     "sha256": "8936c22780e273ca1b860a4ef671041639b39ac24ce1b4a0247ebd88c9ea04d0",
      "upstream": "client/phi_sync_engine.h"
     },
     {
-     "blob": "cd756459cae426e3a997637da515fca02d25411e",
-     "lines": 386,
      "local": "core/client/phi_sync_invalidation.cc",
-     "mode": "100644",
      "role": "sync engine: invalidation stream parser",
-     "sha256": "ebcc8cfb3dac71820f537655da765dc97a336025828ae0cefb3ac171c52e064d",
      "upstream": "client/phi_sync_invalidation.cc"
     },
     {
-     "blob": "6d1087c360873c591ae6375db71eb93abd3b893e",
-     "lines": 59,
      "local": "core/client/phi_sync_invalidation.h",
-     "mode": "100644",
      "role": "sync engine: invalidation stream parser",
-     "sha256": "6329b469d11e75a905fecaaa9f3e4a6ce9af27dc4b1bfad1c74c297268920231",
      "upstream": "client/phi_sync_invalidation.h"
     },
     {
-     "blob": "951a99623411e7efa41761425d0b92ffa8c7a248",
-     "lines": 1418,
      "local": "core/client/phi_sync_keys.cc",
-     "mode": "100644",
      "role": "sync engine: key layer (account, device and profile keys)",
-     "sha256": "6a62306d4ab81ef3a2a82062d7fa97708a7627760734c62108aa252eae11754c",
      "upstream": "client/phi_sync_keys.cc"
     },
     {
-     "blob": "0f01b0100a13fb16d135b6e2a5d2503ffb391843",
-     "lines": 664,
      "local": "core/client/phi_sync_keys.h",
-     "mode": "100644",
      "role": "sync engine: key layer (account, device and profile keys)",
-     "sha256": "0318bdb6b1dd8b86fcd03e5db2b01b8047116822865613327b779a294e511511",
      "upstream": "client/phi_sync_keys.h"
     },
     {
-     "blob": "01ac046d44513d39a53b8ee97bf6e0ede9ee4b95",
-     "lines": 350,
      "local": "core/client/phi_sync_merge.cc",
-     "mode": "100644",
      "role": "sync engine: per-kind merge and client tags",
-     "sha256": "8da4d7bab5ac5e2cc141b94772844876a5bb3b8a21aa61341ab47532845fc274",
      "upstream": "client/phi_sync_merge.cc"
     },
     {
-     "blob": "d7634d21ca99762b64b668ba12ae5ad45420f93c",
-     "lines": 91,
      "local": "core/client/phi_sync_merge.h",
-     "mode": "100644",
      "role": "sync engine: per-kind merge and client tags",
-     "sha256": "3167467a4ca78bc0067e4789ed1e39d85d9c76d14fed1137796ccb969e5f3300",
      "upstream": "client/phi_sync_merge.h"
     },
     {
-     "blob": "1452981aa2b36ac2df98e8f919302dd12edcd52e",
-     "lines": 139,
      "local": "core/client/phi_sync_owned.cc",
-     "mode": "100644",
      "role": "sync engine: owned items (cursor table, snapshot, diff, plan)",
-     "sha256": "a202e8fb866e3be2698e981806ee9e598c403403c10efd364769c68fc5287ea0",
      "upstream": "client/phi_sync_owned.cc"
     },
     {
-     "blob": "f59e8f05ab16de393b360bdcf7dda4d5035f1952",
-     "lines": 1168,
      "local": "core/client/phi_sync_owned.h",
-     "mode": "100644",
      "role": "sync engine: owned items (cursor table, snapshot, diff, plan)",
-     "sha256": "3e846df3b40225bdb1436bf6fdccc3a6c9097c7a9d75ca42ead52c353a3ab829",
      "upstream": "client/phi_sync_owned.h"
     },
     {
-     "blob": "35677a641d86790a1f77ea627dfb8c4476192394",
-     "lines": 507,
      "local": "core/client/phi_sync_owned_kinds.cc",
-     "mode": "100644",
      "role": "sync engine: bookmark and pinned-tab kinds (codec, merge)",
-     "sha256": "7dce1e467347584f46baf433d927d74be7e00518511547a23dd4cf7c3100610e",
      "upstream": "client/phi_sync_owned_kinds.cc"
     },
     {
-     "blob": "6af029a161590e299a2d1a319ba13800fd15fb30",
-     "lines": 199,
      "local": "core/client/phi_sync_owned_kinds.h",
-     "mode": "100644",
      "role": "sync engine: bookmark and pinned-tab kinds (codec, merge)",
-     "sha256": "b56b4e21ed3b92dc349e49079a3dd4b4d97c5689c534e3429a9486d3893c33be",
      "upstream": "client/phi_sync_owned_kinds.h"
     },
     {
-     "blob": "ff14e5ba840a05c99ea58d69028d364043036f97",
-     "lines": 922,
      "local": "core/client/phi_sync_pins.cc",
-     "mode": "100644",
      "role": "sync engine: pinned-tab kind as the engine drives it",
-     "sha256": "958daa709c7f0be93adce6120dae7da568db97acfd05b096bd632a4f0b1e349a",
      "upstream": "client/phi_sync_pins.cc"
     },
     {
-     "blob": "20bb42faf910cce09c193d321e3a341be7c4275b",
-     "lines": 161,
      "local": "core/client/phi_sync_pins.h",
-     "mode": "100644",
      "role": "sync engine: pinned-tab kind as the engine drives it",
-     "sha256": "ba3f0a809ba3e490fac886fcc831719c065b40fa2f9eacd56861d94cc44a9d2e",
      "upstream": "client/phi_sync_pins.h"
     },
     {
-     "blob": "9cb340018e1a001c468fef93dcaf00fe22f10a61",
-     "lines": 850,
      "local": "core/client/phi_sync_proto.cc",
-     "mode": "100644",
      "role": "sync engine: phi.PhiEntity structs and protobuf codec",
-     "sha256": "0d281b0d05cb5414b8ed986c5ce85900dcc86f9c0079ca5fea69b7ab37680eef",
      "upstream": "client/phi_sync_proto.cc"
     },
     {
-     "blob": "6ebee8dc94dbc3f997775570efd577d3325d9a58",
-     "lines": 233,
      "local": "core/client/phi_sync_proto.h",
-     "mode": "100644",
      "role": "sync engine: phi.PhiEntity structs and protobuf codec",
-     "sha256": "c566926bf873119829d0463923a8652431cd946cc42778e6f612fbe9db995ac2",
      "upstream": "client/phi_sync_proto.h"
     },
     {
-     "blob": "e1c76b86737d6108a729003ea4c64df4b31be6ea",
-     "lines": 493,
      "local": "core/client/phi_sync_protocol.cc",
-     "mode": "100644",
      "role": "sync engine: wire protocol (host seam SyncTransport)",
-     "sha256": "6e05d85da6252e57cdcd6b3f24e8410537acb986e30c2b0bfdbd9b8fbc90231b",
      "upstream": "client/phi_sync_protocol.cc"
     },
     {
-     "blob": "4715684cda860679f428a178f73ef04188da1813",
-     "lines": 161,
      "local": "core/client/phi_sync_protocol.h",
-     "mode": "100644",
      "role": "sync engine: wire protocol (host seam SyncTransport)",
-     "sha256": "1b8e82022e6b2645fd67933bed69f92b5191313f068691edb523aa5e06d6679f",
      "upstream": "client/phi_sync_protocol.h"
     },
     {
-     "blob": "b14fcbaf28e19ef041fd7232915ab7069beab06a",
-     "lines": 195,
      "local": "core/client/phi_sync_rank.cc",
-     "mode": "100644",
      "role": "sync engine: fractional ranks",
-     "sha256": "d9404108fafc13d1594596108e8fc287bc23d7057b65cd6505a57cbaeabebd38",
      "upstream": "client/phi_sync_rank.cc"
     },
     {
-     "blob": "6aad72e5a6870a98d193f6b4c598274f62c71ae9",
-     "lines": 63,
      "local": "core/client/phi_sync_rank.h",
-     "mode": "100644",
      "role": "sync engine: fractional ranks",
-     "sha256": "d1fc1c68d94c8ebfa0b6d7cceeb6ccc649741d91abc5507c49527a52a894651b",
      "upstream": "client/phi_sync_rank.h"
     },
     {
-     "blob": "fc77bae58d379881039a6005ecd20c253e347201",
-     "lines": 2198,
      "local": "core/client/phi_sync_rules.cc",
-     "mode": "100644",
      "role": "sync engine: URL rule kind",
-     "sha256": "88ea45cd72a2280ca5db73b0fc5b0a978e67111d70be5d2af8e864fe25ee31b4",
      "upstream": "client/phi_sync_rules.cc"
     },
     {
-     "blob": "2a4f8ae3c8ac4e3465be62e1fa150325645c7a37",
-     "lines": 335,
      "local": "core/client/phi_sync_rules.h",
-     "mode": "100644",
      "role": "sync engine: URL rule kind",
-     "sha256": "103d1685955ead4b3e7cf3cbfa8ae2b079c1bf7c962b01248fd41b3c56aae5b5",
      "upstream": "client/phi_sync_rules.h"
     },
     {
-     "blob": "749c61cbe6dfaa060e9dd0d9d02d9f41467f76d8",
-     "lines": 377,
      "local": "core/client/phi_sync_spaces.cc",
-     "mode": "100644",
      "role": "sync engine: Space kind",
-     "sha256": "716a405489fb95530d4fc53b278558f80117bf08f7bbe65976dfe2c214d1a28e",
      "upstream": "client/phi_sync_spaces.cc"
     },
     {
-     "blob": "db6c8ec6572e639ab30a2986121f916e5cff03b9",
-     "lines": 218,
      "local": "core/client/phi_sync_spaces.h",
-     "mode": "100644",
      "role": "sync engine: Space kind",
-     "sha256": "218152e9775d070817a65d2bae296e9ad71a81848d3f67ddba0f4ef94f3092fa",
      "upstream": "client/phi_sync_spaces.h"
     },
     {
-     "blob": "54ddc4b007ea05e769e79bc567ad55ae33fd0dfc",
-     "lines": 156,
      "local": "core/client/phi_sync_status.h",
-     "mode": "100644",
      "role": "sync engine: status summary for the Sync pane",
-     "sha256": "1e65c454d1f85fcbcdb7d14bbc6ea818fb9d3ef590e17204b4eca9336ee0253a",
      "upstream": "client/phi_sync_status.h"
     },
     {
-     "blob": "61d61936099aa28d89d9eac2179d0dfa88bfccc4",
-     "lines": 628,
      "local": "core/client/phi_tab_store.cc",
-     "mode": "100644",
      "role": "local store: pinned tabs and bookmarks as cells",
-     "sha256": "b3007ae6bcfde7ae059997a5c1ea97e727b803785dfe4e124a371651bba4097c",
      "upstream": "client/phi_tab_store.cc"
     },
     {
-     "blob": "861053d7828898f27e1ea33bd165a30b29989ca6",
-     "lines": 201,
      "local": "core/client/phi_tab_store.h",
-     "mode": "100644",
      "role": "local store: pinned tabs and bookmarks as cells",
-     "sha256": "64de97845e30dccd748c4921a935c32440677bb06add9de2a001e1617e4afba8",
      "upstream": "client/phi_tab_store.h"
     },
     {
-     "blob": "79040dc3ce4b509e5195eacfd655ba8ff4b6bee6",
-     "lines": 1436,
      "local": "core/client/phi_unicode_lower.inc",
-     "mode": "100644",
      "role": "local store: generated Unicode lower-case table, included by phi_local_store.cc",
-     "sha256": "0fd480757bceda2c52eed090120459d02563fc23017d1797cd108b231f4680ff",
      "upstream": "client/phi_unicode_lower.inc"
     },
     {
-     "blob": "05338ddaf6d98c2c6726bbbdea6cc458ee875b53",
-     "lines": 409,
      "local": "core/client/phi_url_rule_normalize.cc",
-     "mode": "100644",
      "role": "local store: URL rule normalisation",
-     "sha256": "d7a1042a5e638f463e5d59a5085fc8b38bd504459423d509793e57424980428d",
      "upstream": "client/phi_url_rule_normalize.cc"
     },
     {
-     "blob": "abf25b969b1b768bb474ab6bfaf0e2c44fb33b24",
-     "lines": 62,
      "local": "core/client/phi_url_rule_normalize.h",
-     "mode": "100644",
      "role": "local store: URL rule normalisation",
-     "sha256": "9ace4dce1d541d6f08ef8b750a08a6d7ad568203be82f4c3011ee98d7d5a1d49",
      "upstream": "client/phi_url_rule_normalize.h"
-    },
+    }
+   ],
+   "name": "core",
+   "origin": "https://github.com/phibrowser/phibrowser-win",
+   "owned": true,
+   "trees": []
+  },
+  {
+   "commit": "2931e0e33bf91afec29b8d84fc0132f415848f80",
+   "commit_date": "2026-11-20T12:24:02+08:00",
+   "description": "SQLite and BoringSSL as the Windows client vendored them, which the core group's sources need. Copies: never edited by hand, so each file is recorded with its checksum. The Windows client no longer carries them (it builds them from here), so the group is pinned to the commit they were taken from.",
+   "files": [
     {
      "blob": "e4e1e402246ded31fc835787087219aab516009e",
      "lines": 3,
@@ -5128,9 +4927,9 @@
      "upstream": "third_party/sqlite/sqlite3.h"
     }
    ],
-   "name": "core",
+   "name": "vendor",
    "origin": "https://github.com/phibrowser/phibrowser-win",
-   "pinned": false,
+   "pinned": true,
    "trees": [
     {
      "local": "third_party/boringssl/",

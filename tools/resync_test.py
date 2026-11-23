@@ -180,6 +180,7 @@ class ResyncTest(unittest.TestCase):
         with open(path, encoding="utf-8") as f:
             text = f.read()
         self.assertIn("| `core/client/a.cc` | `client/a.cc` | 1 |", text)
+        self.assertIn("- Edited here: no", text)
         with open(path, "w", encoding="utf-8") as f:
             f.write("# Title\n\n" + text + "\nfooter\n")
         self.assertEqual(self.run_tool("render")[0], 0)
@@ -192,6 +193,94 @@ class ResyncTest(unittest.TestCase):
         code, out = self.run_tool("verify")
         self.assertEqual(code, 1)
         self.assertIn("SOURCE.md: stale", out)
+
+    def own(self):
+        """Turns the group into an owned one, as the real manifest records
+        it: no checksum, mode, blob or line count."""
+        manifest = resync.load_manifest(self.repo)
+        group = manifest["groups"][0]
+        group["owned"] = True
+        group["files"] = [
+            {key: entry[key] for key in ("upstream", "local", "role")}
+            for entry in group["files"]]
+        resync.save_manifest(self.repo, manifest)
+        resync.write_source_md(self.repo, manifest)
+
+    def test_an_owned_file_may_be_edited_but_not_missing_or_unlisted(self):
+        self.sync("--apply")
+        self.own()
+        with open(os.path.join(self.repo, "core/client/a.cc"), "wb") as f:
+            f.write(b"edited here\n")
+        os.chmod(os.path.join(self.repo, "third_party/lib/x.c"), 0o755)
+        self.assertEqual(self.run_tool("verify")[0], 0)
+        os.remove(os.path.join(self.repo, "core/client/b.h"))
+        with open(os.path.join(self.repo, "core/client/extra.cc"), "wb"):
+            pass
+        code, out = self.run_tool("verify")
+        self.assertEqual(code, 1)
+        self.assertNotIn("core/client/a.cc", out)
+        self.assertIn("core/client/b.h: missing", out)
+        self.assertIn("core/client/extra.cc: not in SOURCE.json", out)
+
+    def test_an_owned_group_is_not_compared_with_upstream(self):
+        self.sync("--apply")
+        self.own()
+        with open(os.path.join(self.repo, "core/client/a.cc"), "wb") as f:
+            f.write(b"edited here\n")
+        self.commit({}, delete=["client/a.cc"])
+        self.assertEqual(self.run_tool("verify", "--upstream", self.up)[0], 0)
+
+    def test_sync_leaves_an_owned_group_alone_and_refuses_it_by_name(self):
+        self.sync("--apply")
+        self.own()
+        with open(os.path.join(self.repo, "core/client/a.cc"), "wb") as f:
+            f.write(b"edited here\n")
+        before = self.read("SOURCE.json")
+        self.commit({"client/a.cc": b"int a2;\n"})
+        code, out = self.sync("--apply")
+        self.assertEqual(code, 1)
+        self.assertIn("no group to sync", out)
+        code, out = self.sync("--group", "core", "--apply")
+        self.assertEqual(code, 1)
+        self.assertIn("group core is edited here", out)
+        self.assertEqual(self.read("core/client/a.cc"), b"edited here\n")
+        self.assertEqual(self.read("SOURCE.json"), before)
+
+    def test_an_owned_group_renders_without_lines_and_checksums(self):
+        self.sync("--apply")
+        checksum = resync.sha256(b"int a;\r\n")
+        with open(os.path.join(self.repo, "SOURCE.md"),
+                  encoding="utf-8") as f:
+            self.assertIn(checksum, f.read())
+        self.own()
+        with open(os.path.join(self.repo, "SOURCE.md"),
+                  encoding="utf-8") as f:
+            text = f.read()
+        self.assertIn("- Edited here: yes", text)
+        self.assertIn("| `core/client/a.cc` | `client/a.cc` | a |", text)
+        self.assertNotIn(checksum, text)
+        self.assertEqual(self.run_tool("verify")[0], 0)
+
+    def test_a_file_created_in_an_owned_group_needs_only_its_entry(self):
+        self.sync("--apply")
+        self.own()
+        with open(os.path.join(self.repo, "core/client/new.cc"), "wb") as f:
+            f.write(b"int n;\n")
+        self.assertEqual(self.run_tool("verify")[0], 1)
+        manifest = resync.load_manifest(self.repo)
+        manifest["groups"][0]["files"].append(
+            {"local": "core/client/new.cc", "role": "new"})
+        resync.save_manifest(self.repo, manifest)
+        code, out = self.run_tool("verify")
+        self.assertEqual(code, 1)
+        self.assertIn("SOURCE.md: stale", out)
+        self.assertEqual(self.run_tool("render")[0], 0)
+        self.assertEqual(self.run_tool("verify")[0], 0)
+        with open(os.path.join(self.repo, "SOURCE.md"),
+                  encoding="utf-8") as f:
+            self.assertIn(
+                "| `core/client/new.cc` | none: created here | new |",
+                f.read())
 
     def test_executable_mode_is_carried(self):
         full = os.path.join(self.up, "client/b.h")
